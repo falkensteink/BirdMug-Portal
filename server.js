@@ -38,7 +38,7 @@ const APP_REGISTRY = {
   dod: {
     name: 'Dice of Domains',
     description: 'Jujutsu Kaisen dice battle game',
-    url: 'https://dod.birdmug.com',
+    url: 'https://falkensteink.itch.io/dice-of-domains',
     category: 'app',
     containers: ['dod_relay', 'dod_cloudflared'],
     primary: 'dod_relay',
