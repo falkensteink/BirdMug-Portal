@@ -1,0 +1,15 @@
+{
+  "name": "birdmug-portal",
+  "version": "1.0.0",
+  "description": "BirdMug Portal — app library and server dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "SSH_HOST=falkensteink@192.168.5.2 node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

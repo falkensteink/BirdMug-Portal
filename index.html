@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BirdMug</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #1e2330;
+      border-bottom: 1px solid #2d3748;
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-right: 16px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 0.85rem;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s;
+    }
+    .tab-btn:hover { color: #e2e8f0; }
+    .tab-btn.active { color: #f8fafc; border-bottom-color: #3b82f6; }
+
+    .spacer { flex: 1; }
+
+    .nav-user {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-family: monospace;
+    }
+
+    .nav-btn {
+      background: none;
+      border: 1px solid #2d3748;
+      color: #94a3b8;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .nav-btn:hover { border-color: #475569; color: #f1f5f9; }
+    .nav-btn.danger:hover { border-color: #7f1d1d; color: #f87171; }
+
+    /* ── Content ── */
+    .content { padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+
+    h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 14px;
+      margin-top: 28px;
+    }
+    h2:first-child { margin-top: 0; }
+
+    /* ── App Grid ── */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .app-card {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 16px 18px;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.15s;
+    }
+    .app-card:hover { border-color: #475569; }
+
+    .app-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .app-card .name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .app-card .desc {
+      font-size: 0.78rem;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot.up { background: #4ade80; box-shadow: 0 0 6px #4ade8088; }
+    .dot.down { background: #f87171; box-shadow: 0 0 6px #f8717188; }
+    .dot.unknown { background: #64748b; }
+
+    /* ── Admin: Stats Row ── */
+    .server-stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 14px 20px;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .stat-card .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .stat-card .value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      font-family: monospace;
+    }
+
+    .stat-card .sub {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    .load-ok { color: #4ade80; }
+    .load-warn { color: #facc15; }
+    .load-high { color: #f87171; }
+
+    /* ── Admin: Two-column grid ── */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .admin-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .panel h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 14px;
+    }
+
+    /* ── Admin: Container list ── */
+    .project-group { margin-bottom: 16px; }
+    .project-group:last-child { margin-bottom: 0; }
+
+    .project-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .container-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 3px 0;
+    }
+
+    .container-name {
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      flex: 1;
+    }
+
+    .container-status {
+      font-size: 0.7rem;
+      color: #64748b;
+      text-align: right;
+    }
+
+    /* ── Admin: Bug list ── */
+    .bug-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #2d374833;
+    }
+    .bug-item:last-child { border-bottom: none; }
+
+    .bug-item a {
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      text-decoration: none;
+    }
+    .bug-item a:hover { color: #60a5fa; }
+
+    .bug-meta {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-app { background: #1e3a5f; color: #60a5fa; }
+    .badge-open { background: #2d1b1b; color: #f87171; }
+    .badge-closed { background: #1b2d1b; color: #4ade80; }
+
+    /* ── Login overlay ── */
+    #login-screen {
+      position: fixed; inset: 0;
+      background: #0f1117ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .login-box {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 32px;
+      width: 340px;
+      text-align: center;
+    }
+    .login-box h2 {
+      font-size: 1.2rem;
+      margin-bottom: 6px;
+      color: #f8fafc;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .login-box .sub { font-size: 0.8rem; color: #64748b; margin-bottom: 20px; }
+    .login-box input {
+      width: 100%; padding: 10px 12px; margin-bottom: 10px;
+      background: #0f1117; border: 1px solid #2d3748; border-radius: 6px;
+      color: #e2e8f0; font-size: 0.9rem;
+    }
+    .login-box input:focus { outline: none; border-color: #60a5fa; }
+    .login-box button {
+      width: 100%; padding: 10px; margin-top: 6px;
+      background: #3b82f6; border: none; border-radius: 6px;
+      color: #fff; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    }
+    .login-box button:hover { background: #2563eb; }
+    .login-box .error { color: #f87171; font-size: 0.8rem; margin-top: 8px; }
+    .login-box .register-link { font-size: 0.78rem; color: #64748b; margin-top: 14px; }
+    .login-box .register-link a { color: #60a5fa; text-decoration: none; }
+
+    /* ── Skeleton loader ── */
+    .skeleton {
+      background: linear-gradient(90deg, #1e2330 25%, #252b3b 50%, #1e2330 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      height: 1em;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Error banner ── */
+    .error-banner {
+      background: #2d1b1b;
+      border: 1px solid #7f1d1d;
+      border-radius: 10px;
+      padding: 14px 20px;
+      color: #fca5a5;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      display: none;
+    }
+
+    .empty-state {
+      color: #475569;
+      font-size: 0.85rem;
+      padding: 12px 0;
+    }
+
+    #last-updated {
+      font-size: 0.72rem;
+      color: #475569;
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login overlay -->
+  <div id="login-screen" style="display:none">
+    <div class="login-box">
+      <h2>BirdMug</h2>
+      <div class="sub">Sign in to access the admin dashboard</div>
+      <input id="login-user" type="text" placeholder="Username" autocomplete="username">
+      <input id="login-pass" type="password" placeholder="Password" autocomplete="current-password">
+      <button onclick="doLogin()">Sign In</button>
+      <div id="login-error" class="error"></div>
+      <div class="register-link">No account? <a href="https://accounts.birdmug.com/register" target="_blank">Create one</a></div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav>
+    <span class="logo">BirdMug</span>
+    <button class="tab-btn active" data-tab="apps" onclick="switchTab('apps')">Apps</button>
+    <button class="tab-btn" data-tab="admin" id="admin-tab-btn" style="display:none" onclick="switchTab('admin')">Admin</button>
+    <span class="spacer"></span>
+    <span class="nav-user" id="nav-user"></span>
+    <button class="nav-btn" id="signin-btn" onclick="showLogin()">Sign In</button>
+    <button class="nav-btn danger" id="logout-btn" style="display:none" onclick="doLogout()">Logout</button>
+  </nav>
+
+  <!-- Tab: Apps (public) -->
+  <section id="tab-apps" class="content">
+    <div id="error-banner" class="error-banner"></div>
+
+    <h2>Apps</h2>
+    <div class="app-grid" id="app-cards">
+      <div class="app-card"><div class="skeleton" style="width:120px">&nbsp;</div></div>
+      <div class="app-card"><div class="skeleton" style="width:120px">&nbsp;</div></div>
+      <div class="app-card"><div class="skeleton" style="width:120px">&nbsp;</div></div>
+    </div>
+
+    <h2>Infrastructure</h2>
+    <div class="app-grid" id="infra-cards">
+      <div class="app-card"><div class="skeleton" style="width:120px">&nbsp;</div></div>
+      <div class="app-card"><div class="skeleton" style="width:120px">&nbsp;</div></div>
+    </div>
+
+    <div id="last-updated"></div>
+  </section>
+
+  <!-- Tab: Admin (auth required) -->
+  <section id="tab-admin" class="content" style="display:none">
+    <div class="server-stats" id="stats">
+      <div class="stat-card"><div class="label">Uptime</div><div class="value skeleton" style="width:80px">&nbsp;</div></div>
+      <div class="stat-card"><div class="label">Load</div><div class="value skeleton" style="width:50px">&nbsp;</div></div>
+      <div class="stat-card"><div class="label">Memory</div><div class="value skeleton" style="width:80px">&nbsp;</div></div>
+      <div class="stat-card"><div class="label">Disk</div><div class="value skeleton" style="width:60px">&nbsp;</div></div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="panel" id="container-panel">
+        <h3>Containers</h3>
+        <div class="empty-state">Loading...</div>
+      </div>
+      <div class="panel" id="bugs-panel">
+        <h3>Recent Bugs</h3>
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+  </section>
+
+<script>
+const AUTH_URL = 'https://accounts.birdmug.com';
+let appTimer, statusTimer, bugsTimer;
+
+// ── Auth ──────────────────────────────────────────────────────
+function getToken() { return localStorage.getItem('bm_token'); }
+
+function updateAuthUI() {
+  const token = getToken();
+  const user = localStorage.getItem('bm_username');
+  document.getElementById('admin-tab-btn').style.display = token ? '' : 'none';
+  document.getElementById('signin-btn').style.display = token ? 'none' : '';
+  document.getElementById('logout-btn').style.display = token ? '' : 'none';
+  document.getElementById('nav-user').textContent = token ? user || '' : '';
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').focus();
+}
+
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if (!user || !pass) { errEl.textContent = 'Enter username and password'; return; }
+  try {
+    const resp = await fetch(`${AUTH_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) { errEl.textContent = data.error || 'Login failed'; return; }
+    localStorage.setItem('bm_token', data.token);
+    localStorage.setItem('bm_username', data.username);
+    document.getElementById('login-screen').style.display = 'none';
+    updateAuthUI();
+    loadStatus();
+    loadBugs();
+  } catch (e) {
+    errEl.textContent = 'Cannot reach login server';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('bm_token');
+  localStorage.removeItem('bm_username');
+  clearInterval(statusTimer);
+  clearInterval(bugsTimer);
+  switchTab('apps');
+  updateAuthUI();
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ── Tabs ──────────────────────────────────────────────────────
+function switchTab(tab) {
+  if (tab === 'admin' && !getToken()) { showLogin(); return; }
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('tab-apps').style.display = tab === 'apps' ? '' : 'none';
+  document.getElementById('tab-admin').style.display = tab === 'admin' ? '' : 'none';
+  if (tab === 'admin') {
+    loadStatus();
+    loadBugs();
+    statusTimer = statusTimer || setInterval(loadStatus, 30000);
+    bugsTimer = bugsTimer || setInterval(loadBugs, 300000);
+  }
+}
+
+// ── Public: App grid ──────────────────────────────────────────
+async function loadApps() {
+  try {
+    const res = await fetch('/api/apps');
+    const data = await res.json();
+    const banner = document.getElementById('error-banner');
+
+    if (data.error) {
+      banner.textContent = data.error;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+
+    const apps = (data.apps || []).filter(a => a.category === 'app');
+    const infra = (data.apps || []).filter(a => a.category !== 'app');
+
+    document.getElementById('app-cards').innerHTML = renderCards(apps);
+    document.getElementById('infra-cards').innerHTML = renderCards(infra);
+
+    const t = new Date(data.ts);
+    document.getElementById('last-updated').textContent =
+      `Updated ${t.toLocaleTimeString()}`;
+  } catch (e) {
+    document.getElementById('error-banner').textContent = `Error: ${e.message}`;
+    document.getElementById('error-banner').style.display = 'block';
+  }
+}
+
+function renderCards(apps) {
+  if (!apps.length) return '<div class="empty-state">No services found</div>';
+  return apps.map(a => `
+    <a class="app-card" href="${a.url}" target="_blank" rel="noopener">
+      <div class="app-card-header">
+        <div class="dot ${a.up ? 'up' : 'down'}"></div>
+        <span class="name">${esc(a.name)}</span>
+      </div>
+      <div class="desc">${esc(a.description)}</div>
+    </a>
+  `).join('');
+}
+
+// ── Admin: Server status ──────────────────────────────────────
+async function loadStatus() {
+  try {
+    const token = getToken();
+    const res = await fetch('/api/status', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+
+    if (!data.ok) {
+      document.getElementById('stats').innerHTML =
+        `<div class="error-banner" style="display:block">${esc(data.error)}</div>`;
+      return;
+    }
+
+    const lc = data.load < 1.5 ? 'load-ok' : data.load < 3 ? 'load-warn' : 'load-high';
+    document.getElementById('stats').innerHTML = `
+      <div class="stat-card">
+        <div class="label">Uptime</div>
+        <div class="value">${esc(data.uptime)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Load (1m)</div>
+        <div class="value ${lc}">${data.load ?? '-'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Memory</div>
+        <div class="value">${esc(data.mem.used)}</div>
+        <div class="sub">of ${esc(data.mem.total)} | ${esc(data.mem.available)} free</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Disk</div>
+        <div class="value">${esc(data.disk.pct)}</div>
+        <div class="sub">${esc(data.disk.used)} / ${esc(data.disk.size)}</div>
+      </div>
+    `;
+
+    // Container panel
+    document.getElementById('container-panel').innerHTML = '<h3>Containers</h3>' +
+      data.projects.map(p => `
+        <div class="project-group">
+          <div class="project-name">${esc(p.name)}</div>
+          ${p.containers.map(c => `
+            <div class="container-row">
+              <div class="dot ${c.status === null ? 'unknown' : c.up ? 'up' : 'down'}"></div>
+              <div class="container-name">${esc(c.name)}</div>
+              <div class="container-status">${shortStatus(c.status)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+  } catch (e) {
+    document.getElementById('stats').innerHTML =
+      `<div class="error-banner" style="display:block">Dashboard error: ${esc(e.message)}</div>`;
+  }
+}
+
+function shortStatus(s) {
+  if (!s) return 'not running';
+  const m = s.match(/Up (.+?)( \(|$)/);
+  return m ? `Up ${m[1]}` : s;
+}
+
+// ── Admin: Bugs ───────────────────────────────────────────────
+async function loadBugs() {
+  try {
+    const token = getToken();
+    const res = await fetch('/api/bugs', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (res.status === 401) return;
+    const data = await res.json();
+
+    const panel = document.getElementById('bugs-panel');
+    if (!data.reports.length) {
+      panel.innerHTML = '<h3>Recent Bugs</h3><div class="empty-state">No bugs reported</div>';
+      return;
+    }
+
+    panel.innerHTML = '<h3>Recent Bugs</h3>' +
+      data.reports.map(r => `
+        <div class="bug-item">
+          <a href="${r.github_url || ('https://bugs.birdmug.com/reports/' + r.id)}" target="_blank" rel="noopener">
+            ${esc(r.title)}
+          </a>
+          <div class="bug-meta">
+            <span class="badge badge-app">${esc(r.app)}</span>
+            <span class="badge ${r.status === 'open' ? 'badge-open' : 'badge-closed'}">${esc(r.status)}</span>
+            ${timeAgo(r.created_at)}
+          </div>
+        </div>
+      `).join('');
+  } catch (e) {
+    document.getElementById('bugs-panel').innerHTML =
+      '<h3>Recent Bugs</h3><div class="empty-state">Cannot load bugs</div>';
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr + 'Z').getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+updateAuthUI();
+loadApps();
+appTimer = setInterval(loadApps, 60000);
+</script>
+</body>
+</html>

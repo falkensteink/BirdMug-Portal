@@ -1,0 +1,43 @@
+services:
+  # ── Production ──
+  portal-prod:
+    build: .
+    container_name: birdmug_portal
+    profiles: ["prod"]
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - portal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - PORT=${PORT}
+      - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
+      - BUGFAIRY_URL=${BUGFAIRY_URL}
+
+  cloudflared-prod:
+    image: cloudflare/cloudflared:latest
+    container_name: birdmug_portal_cloudflared
+    profiles: ["prod"]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --config /etc/cloudflared/birdmug-portal-config.yml run
+    volumes:
+      - /home/falkensteink/.cloudflared:/etc/cloudflared
+    depends_on:
+      - portal-prod
+
+  # ── Development ──
+  portal-dev:
+    build: .
+    container_name: birdmug_portal_dev
+    profiles: ["dev"]
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - PORT=${PORT}
+      - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
+      - BUGFAIRY_URL=${BUGFAIRY_URL}
+    ports:
+      - "3081:3080"
