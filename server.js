@@ -23,6 +23,7 @@ const APP_REGISTRY = {
     name: 'Spellstorm',
     description: 'Multiplayer trick-taking card game',
     url: 'https://spellstorm.birdmug.com',
+    itch: 'https://falkensteink.itch.io/spellstorm',
     category: 'app',
     containers: ['spellstorm_server', 'spellstorm_cloudflared'],
     primary: 'spellstorm_server',
@@ -39,6 +40,7 @@ const APP_REGISTRY = {
     name: 'Dice of Domains',
     description: 'Jujutsu Kaisen dice battle game',
     url: 'https://falkensteink.itch.io/dice-of-domains',
+    itch: 'https://falkensteink.itch.io/dice-of-domains',
     category: 'app',
     containers: ['dod_relay', 'dod_cloudflared'],
     primary: 'dod_relay',
@@ -178,7 +180,7 @@ app.get('/api/apps', async (req, res) => {
     const apps = Object.entries(APP_REGISTRY).map(([id, app]) => {
       const primaryStatus = containerMap[app.primary] || '';
       const up = primaryStatus.toLowerCase().startsWith('up');
-      return {
+      const entry = {
         id,
         name: app.name,
         description: app.description,
@@ -186,6 +188,8 @@ app.get('/api/apps', async (req, res) => {
         category: app.category,
         up,
       };
+      if (app.itch) entry.itch = app.itch;
+      return entry;
     });
     res.json({ apps, ts: Date.now() });
   } catch (err) {

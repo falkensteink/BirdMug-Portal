@@ -95,12 +95,27 @@
       border: 1px solid #2d3748;
       border-radius: 10px;
       padding: 16px 18px;
-      text-decoration: none;
-      color: inherit;
-      display: block;
       transition: border-color 0.15s;
     }
     .app-card:hover { border-color: #475569; }
+
+    .app-card-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .itch-link {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: #fa5c5c;
+      text-decoration: none;
+      border: 1px solid #fa5c5c33;
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+    .itch-link:hover { background: #fa5c5c18; }
 
     .app-card-header {
       display: flex;
@@ -514,13 +529,16 @@ async function loadApps() {
 function renderCards(apps) {
   if (!apps.length) return '<div class="empty-state">No services found</div>';
   return apps.map(a => `
-    <a class="app-card" href="${a.url}" target="_blank" rel="noopener">
-      <div class="app-card-header">
-        <div class="dot ${a.up ? 'up' : 'down'}"></div>
-        <span class="name">${esc(a.name)}</span>
-      </div>
-      <div class="desc">${esc(a.description)}</div>
-    </a>
+    <div class="app-card">
+      <a href="${a.url}" target="_blank" rel="noopener" class="app-card-link">
+        <div class="app-card-header">
+          <div class="dot ${a.up ? 'up' : 'down'}"></div>
+          <span class="name">${esc(a.name)}</span>
+        </div>
+        <div class="desc">${esc(a.description)}</div>
+      </a>
+      ${a.itch ? `<a class="itch-link" href="${a.itch}" target="_blank" rel="noopener">itch.io</a>` : ''}
+    </div>
   `).join('');
 }
 
