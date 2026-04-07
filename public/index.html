@@ -64,29 +64,6 @@
 
         <div id="error-banner" class="error-banner" role="alert" aria-live="assertive" hidden></div>
 
-        <section class="overview-strip" aria-label="System overview">
-          <article class="overview-card">
-            <span class="overview-label">Products Online</span>
-            <strong class="overview-value" id="apps-online-value">--</strong>
-            <span class="overview-detail" id="apps-online-detail">Loading live registry</span>
-          </article>
-          <article class="overview-card">
-            <span class="overview-label">Infrastructure Online</span>
-            <strong class="overview-value" id="infra-online-value">--</strong>
-            <span class="overview-detail" id="infra-online-detail">Loading live registry</span>
-          </article>
-          <article class="overview-card">
-            <span class="overview-label">Access</span>
-            <strong class="overview-value" id="access-state-value">Public</strong>
-            <span class="overview-detail" id="access-state-detail">Sign in for operations telemetry</span>
-          </article>
-          <article class="overview-card">
-            <span class="overview-label">Last Refresh</span>
-            <strong class="overview-value" id="last-updated-value">--</strong>
-            <span class="overview-detail" id="last-updated-detail">Waiting on first response</span>
-          </article>
-        </section>
-
         <section class="catalog-section" id="catalog-products">
           <div class="section-heading">
             <div>
@@ -134,16 +111,11 @@
 
         <section class="admin-access-gate" id="admin-access-gate" hidden>
           <div class="admin-access-copy">
-            <p class="section-tag">Preview Mode</p>
-            <h2>Control room layout is visible. Live telemetry stays gated.</h2>
-            <p class="hero-text">You can browse the operations surface without interruption. Sign in only when you want real host metrics, container state, and bug intake data.</p>
+            <p class="section-tag">Operator Access Required</p>
+            <h2>Sign in to access the control room.</h2>
+            <p class="hero-text">Host metrics, container state, and bug flow are restricted to approved operators.</p>
           </div>
           <div class="admin-access-actions">
-            <div class="gate-stat">
-              <span class="overview-label">Current access</span>
-              <strong class="overview-value">Public</strong>
-              <span class="overview-detail">Read-only shell preview</span>
-            </div>
             <form id="gate-login-form" class="gate-login-form">
               <label class="field">
                 <span>Username</span>
@@ -153,12 +125,31 @@
                 <span>Password</span>
                 <input id="gate-login-pass" type="password" placeholder="Password" autocomplete="current-password">
               </label>
-              <button type="submit" class="btn btn-primary btn-block">Sign In for Live Data</button>
+              <button type="submit" class="btn btn-primary btn-block">Sign In</button>
               <div id="gate-login-error" class="login-error" role="status" aria-live="polite"></div>
-              <p class="login-register">No account yet? <a href="https://accounts.birdmug.com/register" target="_blank" rel="noopener">Create one</a></p>
+            </form>
+            <div class="gate-divider">
+              <span>or</span>
+            </div>
+            <form id="request-access-form" class="gate-login-form">
+              <p class="request-access-label">Need operator access?</p>
+              <label class="field">
+                <span>Your name</span>
+                <input id="request-name" type="text" placeholder="Name" required>
+              </label>
+              <label class="field">
+                <span>Email or contact</span>
+                <input id="request-contact" type="text" placeholder="email@example.com" required>
+              </label>
+              <label class="field">
+                <span>Reason</span>
+                <input id="request-reason" type="text" placeholder="Why do you need access?">
+              </label>
+              <button type="submit" class="btn btn-secondary btn-block">Request Access</button>
+              <div id="request-access-status" class="login-error" role="status" aria-live="polite"></div>
             </form>
             <div class="gate-buttons">
-              <button type="button" class="btn btn-secondary" id="admin-gate-back">Back to Public Index</button>
+              <button type="button" class="btn btn-ghost" id="admin-gate-back">Back to Public Index</button>
             </div>
           </div>
         </section>

@@ -15,6 +15,7 @@ services:
       - NODE_ENV=production
       - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
       - BUGFAIRY_URL=${BUGFAIRY_URL}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
     ports:
       - "3080:3080"
 

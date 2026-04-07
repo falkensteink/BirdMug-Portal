@@ -174,6 +174,7 @@ button {
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.1rem;
   letter-spacing: 0.02em;
+  color: var(--accent);
 }
 
 .brand-subtitle {
@@ -472,7 +473,6 @@ h3 {
 }
 
 .signal-card,
-.overview-card,
 .metric-card,
 .service-card,
 .panel {
@@ -482,14 +482,16 @@ h3 {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
 }
 
+.signal-card {
+  border-left: 3px solid rgba(211, 168, 95, 0.35);
+}
+
 .signal-card,
-.overview-card,
 .metric-card {
   padding: 18px;
 }
 
 .signal-label,
-.overview-label,
 .metric-label,
 .service-kicker,
 .project-meta,
@@ -503,7 +505,6 @@ h3 {
 }
 
 .signal-value,
-.overview-value,
 .metric-value {
   display: block;
   margin-top: 10px;
@@ -530,22 +531,10 @@ h3 {
   font-size: 0.9rem;
 }
 
-.overview-strip,
 .admin-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-}
-
-.overview-card {
-  padding: 20px 20px 18px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
-    var(--bg-panel);
-}
-
-.overview-value {
-  font-size: clamp(1.8rem, 3vw, 2.3rem);
 }
 
 .catalog-section {
@@ -558,6 +547,8 @@ h3 {
   justify-content: space-between;
   align-items: end;
   gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(211, 168, 95, 0.15);
 }
 
 .section-copy {
@@ -709,6 +700,30 @@ h3 {
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
+}
+
+.gate-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.gate-divider::before,
+.gate-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.request-access-label {
+  color: var(--muted-strong);
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 .gate-buttons {
@@ -987,7 +1002,6 @@ h3 {
     grid-template-columns: 1fr;
   }
 
-  .overview-strip,
   .admin-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1021,7 +1035,6 @@ h3 {
     align-items: stretch;
   }
 
-  .overview-strip,
   .admin-metrics,
   .hero-signal-grid,
   .service-grid-products,

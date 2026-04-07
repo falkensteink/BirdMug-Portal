@@ -17,6 +17,8 @@ const els = {
   gateLoginUser: document.getElementById("gate-login-user"),
   gateLoginPass: document.getElementById("gate-login-pass"),
   gateLoginError: document.getElementById("gate-login-error"),
+  requestAccessForm: document.getElementById("request-access-form"),
+  requestAccessStatus: document.getElementById("request-access-status"),
   signinBtn: document.getElementById("signin-btn"),
   logoutBtn: document.getElementById("logout-btn"),
   navUserWrap: document.getElementById("nav-user-wrap"),
@@ -28,14 +30,6 @@ const els = {
   errorBanner: document.getElementById("error-banner"),
   heroInlineStatus: document.getElementById("hero-inline-status"),
   heroSignalGrid: document.getElementById("hero-signal-grid"),
-  appsOnlineValue: document.getElementById("apps-online-value"),
-  appsOnlineDetail: document.getElementById("apps-online-detail"),
-  infraOnlineValue: document.getElementById("infra-online-value"),
-  infraOnlineDetail: document.getElementById("infra-online-detail"),
-  accessStateValue: document.getElementById("access-state-value"),
-  accessStateDetail: document.getElementById("access-state-detail"),
-  lastUpdatedValue: document.getElementById("last-updated-value"),
-  lastUpdatedDetail: document.getElementById("last-updated-detail"),
   appCards: document.getElementById("app-cards"),
   infraCards: document.getElementById("infra-cards"),
   stats: document.getElementById("stats"),
@@ -54,6 +48,10 @@ els.adminGateBack.addEventListener("click", () => switchTab("apps"));
 els.gateLoginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   void doLogin();
+});
+els.requestAccessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void doRequestAccess();
 });
 
 function getToken() {
@@ -86,18 +84,17 @@ function updateAuthUI() {
   els.navUserWrap.hidden = !isAuthed;
   els.navUser.textContent = username;
   els.sessionUsername.textContent = isAuthed ? username : "Not signed in";
-  els.adminTabBtn.classList.toggle("locked", !isAuthed);
-  els.accessStateValue.textContent = isAuthed ? "Operator" : "Public";
-  els.accessStateDetail.textContent = isAuthed
-    ? "Full runtime telemetry is available."
-    : "Preview admin layout or sign in for live telemetry.";
-  els.heroAdminBtn.textContent = isAuthed ? "Enter Control Room" : "Preview Control Room";
+  els.adminTabBtn.hidden = !isAuthed;
+  els.heroAdminBtn.hidden = !isAuthed;
   syncAdminAccessState();
 }
 
 function showLogin() {
+  // Temporarily show admin tab for the login gate
+  els.adminTabBtn.hidden = false;
   switchTab("admin");
   els.gateLoginError.textContent = "";
+  els.requestAccessStatus.textContent = "";
   window.setTimeout(() => els.gateLoginUser.focus(), 20);
 }
 
@@ -135,8 +132,38 @@ async function doLogin() {
   }
 }
 
-function doLogout(options = {}) {
-  const { preserveTab = false } = options;
+async function doRequestAccess() {
+  const name = document.getElementById("request-name").value.trim();
+  const contact = document.getElementById("request-contact").value.trim();
+  const reason = document.getElementById("request-reason").value.trim();
+  const statusEl = els.requestAccessStatus;
+
+  statusEl.textContent = "";
+  if (!name || !contact) {
+    statusEl.textContent = "Name and contact are required.";
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/request-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, contact, reason }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      statusEl.textContent = data.error || "Request failed.";
+      return;
+    }
+    statusEl.style.color = "var(--green)";
+    statusEl.textContent = "Request sent. You will be contacted when approved.";
+    els.requestAccessForm.reset();
+  } catch {
+    statusEl.textContent = "Cannot reach server.";
+  }
+}
+
+function doLogout() {
   localStorage.removeItem("bm_token");
   localStorage.removeItem("bm_username");
   clearTimeout(appTimer);
@@ -146,7 +173,7 @@ function doLogout(options = {}) {
   statusTimer = null;
   bugsTimer = null;
   updateAuthUI();
-  switchTab(preserveTab && els.body.dataset.activeTab === "admin" ? "admin" : "apps");
+  switchTab("apps");
   resetAdminPanels();
 }
 
@@ -211,7 +238,6 @@ async function loadApps() {
     els.appCards.innerHTML = renderServiceCards(apps, "Products");
     els.infraCards.innerHTML = renderServiceCards(infra, "Infrastructure");
     renderHeroSignals(apps, infra, totalOnline, totalServices);
-    updateOverview(data.ts, apps, infra);
   } catch (error) {
     showError(`Error: ${error.message}`);
     els.heroInlineStatus.textContent = "Registry unavailable";
@@ -235,25 +261,6 @@ function renderHeroSignals(apps, infra, totalOnline, totalServices) {
     renderSignalCard("Infrastructure", `${infraOnline}/${infra.length}`, "Ops services online"),
     renderSignalCard("Access", getToken() ? "Operator" : "Public", getToken() ? "Runtime telemetry unlocked" : "Auth required for admin"),
   ].join("");
-}
-
-function updateOverview(timestamp, apps, infra) {
-  const appOnline = apps.filter((app) => app.up).length;
-  const infraOnline = infra.filter((app) => app.up).length;
-  const now = timestamp ? new Date(timestamp) : null;
-
-  els.appsOnlineValue.textContent = `${appOnline}/${apps.length || 0}`;
-  els.appsOnlineDetail.textContent = appOnline === apps.length
-    ? "All public products responding."
-    : `${apps.length - appOnline} public product(s) degraded.`;
-
-  els.infraOnlineValue.textContent = `${infraOnline}/${infra.length || 0}`;
-  els.infraOnlineDetail.textContent = infraOnline === infra.length
-    ? "Infrastructure baseline is healthy."
-    : `${infra.length - infraOnline} infrastructure service(s) degraded.`;
-
-  els.lastUpdatedValue.textContent = now ? now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "--";
-  els.lastUpdatedDetail.textContent = now ? now.toLocaleDateString([], { month: "short", day: "numeric" }) : "Waiting on first response";
 }
 
 function renderSignalCard(label, value, detail) {
@@ -309,7 +316,7 @@ async function loadStatus() {
     });
 
     if (response.status === 401) {
-      doLogout({ preserveTab: true });
+      doLogout();
       return;
     }
 
@@ -420,7 +427,7 @@ async function loadBugs() {
     });
 
     if (response.status === 401) {
-      doLogout({ preserveTab: true });
+      doLogout();
       return;
     }
 

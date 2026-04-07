@@ -9,6 +9,7 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3080;
 const JWT_SECRET = process.env.BIRDMUG_JWT_SECRET || '';
 const BUGFAIRY_URL = process.env.BUGFAIRY_URL || 'https://bugs.birdmug.com';
+const MATTERMOST_WEBHOOK_URL = process.env.MATTERMOST_WEBHOOK_URL || '';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // Fail hard if JWT secret is missing in production
@@ -142,6 +143,7 @@ const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 30 });
 app.use('/api/', apiLimiter);
 app.use('/', publicLimiter);
+app.use(express.json());
 app.use(express.static(PUBLIC_DIR));
 
 // ── Auth middleware ────────────────────────────────────────────────
@@ -277,6 +279,33 @@ app.get('/api/bugs', requireAuth, async (req, res) => {
   } catch (err) {
     res.json({ reports: [], total: 0, error: 'Cannot reach Bug Fairy' });
   }
+});
+
+// Access request — notifies operator for approval
+const accessRequestLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3 });
+app.post('/api/request-access', accessRequestLimiter, async (req, res) => {
+  const { name, contact, reason } = req.body || {};
+  if (!name || !contact) {
+    return res.status(400).json({ error: 'Name and contact are required.' });
+  }
+
+  const message = `**Portal Access Request**\n| Field | Value |\n|---|---|\n| Name | ${name} |\n| Contact | ${contact} |\n| Reason | ${reason || 'Not provided'} |\n| Time | ${new Date().toISOString()} |`;
+
+  console.log('Access request:', { name, contact, reason });
+
+  if (MATTERMOST_WEBHOOK_URL) {
+    try {
+      await fetch(MATTERMOST_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: message }),
+      });
+    } catch (err) {
+      console.error('Mattermost webhook failed:', err);
+    }
+  }
+
+  res.json({ ok: true });
 });
 
 const server = app.listen(PORT, () => {
