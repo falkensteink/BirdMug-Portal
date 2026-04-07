@@ -4,12 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BirdMug Portal</title>
+  <link rel="icon" href="/assets/birdmug-mark.svg" type="image/svg+xml">
+  <meta name="description" content="BirdMug Portal — live status and access for all BirdMug services.">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body data-active-tab="apps">
-  <div class="page-orbit orbit-left" aria-hidden="true"></div>
-  <div class="page-orbit orbit-right" aria-hidden="true"></div>
-
   <div class="site-shell">
     <header class="topbar">
       <div class="brand-lockup">
@@ -40,9 +39,9 @@
         <section class="hero-panel">
           <div class="hero-copy">
             <p class="section-tag">BirdMug Network</p>
-            <h1>One index for public products, infrastructure, and operator access.</h1>
+            <h1>Service status and operator access.</h1>
             <p class="hero-text">
-              BirdMug Portal surfaces the live status of games, tools, and internal services without turning the page into a generic admin dashboard.
+              Live health for every BirdMug product and infrastructure service. Sign in for host metrics, container state, and bug flow.
             </p>
             <div class="hero-actions">
               <button type="button" class="btn btn-primary" id="hero-admin-btn">Open Control Room</button>
@@ -225,6 +224,21 @@
         </div>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <img src="/assets/birdmug-mark.svg" alt="" class="footer-mark">
+          <span class="footer-name">BirdMug</span>
+        </div>
+        <nav class="footer-links">
+          <a href="https://status.birdmug.com" target="_blank" rel="noopener">Status</a>
+          <a href="https://bugs.birdmug.com" target="_blank" rel="noopener">Bug Tracker</a>
+          <a href="https://accounts.birdmug.com" target="_blank" rel="noopener">Accounts</a>
+        </nav>
+        <span class="footer-copy">&copy; 2026 BirdMug</span>
+      </div>
+    </footer>
   </div>
 
   <script src="/app.js"></script>
