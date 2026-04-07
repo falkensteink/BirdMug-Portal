@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3080;
 const JWT_SECRET = process.env.BIRDMUG_JWT_SECRET || '';
 const BUGFAIRY_URL = process.env.BUGFAIRY_URL || 'https://bugs.birdmug.com';
