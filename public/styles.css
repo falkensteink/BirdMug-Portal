@@ -180,14 +180,12 @@ button {
   gap: 14px;
 }
 
-.brand-mark,
-.login-brand-mark {
+.brand-mark {
   width: 42px;
   height: 42px;
 }
 
-.brand-copy,
-.login-brand {
+.brand-copy {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -408,7 +406,6 @@ h3 {
 .section-copy,
 .overview-detail,
 .empty-state,
-.login-copy,
 .login-register,
 .metric-subtext,
 .bug-meta,

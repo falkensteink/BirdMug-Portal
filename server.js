@@ -11,11 +11,25 @@ const JWT_SECRET = process.env.BIRDMUG_JWT_SECRET || '';
 const BUGFAIRY_URL = process.env.BUGFAIRY_URL || 'https://bugs.birdmug.com';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
+// Fail hard if JWT secret is missing in production
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: BIRDMUG_JWT_SECRET is required in production');
+  process.exit(1);
+}
+
 // SSH prefix for local dev (run commands on Toshi remotely)
 const SSH_HOST = process.env.SSH_HOST;
+if (SSH_HOST && !/^[\w.@-]+$/.test(SSH_HOST)) {
+  console.error('FATAL: SSH_HOST contains invalid characters');
+  process.exit(1);
+}
 const SSH_PREFIX = SSH_HOST
   ? `ssh -o ConnectTimeout=5 -o BatchMode=yes ${SSH_HOST} `
   : '';
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection:', err);
+});
 
 // ── App Registry ──────────────────────────────────────────────────
 // Single source of truth for all BirdMug services.
@@ -111,7 +125,8 @@ const APP_REGISTRY = {
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('X-XSS-Protection', '0');
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   res.setHeader('Content-Security-Policy',
@@ -132,7 +147,7 @@ app.use(express.static(PUBLIC_DIR));
 // ── Auth middleware ────────────────────────────────────────────────
 
 function requireAuth(req, res, next) {
-  if (!JWT_SECRET) return next(); // Auth disabled in dev if no secret
+  if (!JWT_SECRET) return next(); // Auth disabled in dev (production exits at startup)
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim()
     || req.query.token || '';
   if (!token) return res.status(401).json({ error: 'Not authenticated' });
@@ -195,8 +210,8 @@ app.get('/api/apps', async (req, res) => {
       return entry;
     });
     res.json({ apps, ts: Date.now() });
-  } catch (err) {
-    res.json({ apps: [], error: 'Cannot reach Docker', ts: Date.now() });
+  } catch {
+    res.status(503).json({ apps: [], error: 'Cannot reach Docker', ts: Date.now() });
   }
 });
 
@@ -238,7 +253,8 @@ app.get('/api/status', requireAuth, async (req, res) => {
 
     res.json({ ok: true, uptime, load, disk, mem, projects, ts: Date.now() });
   } catch (err) {
-    res.json({ ok: false, error: err.message || 'Failed to get status' });
+    console.error('Status error:', err);
+    res.status(503).json({ ok: false, error: 'Failed to get status' });
   }
 });
 
@@ -263,6 +279,9 @@ app.get('/api/bugs', requireAuth, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`BirdMug Portal -> http://localhost:${PORT}`);
 });
+
+process.on('SIGTERM', () => server.close(() => process.exit(0)));
+process.on('SIGINT', () => server.close(() => process.exit(0)));

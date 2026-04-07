@@ -3,9 +3,9 @@ const APP_POLL_MS = 60000;
 const STATUS_POLL_MS = 30000;
 const BUGS_POLL_MS = 300000;
 
-let appTimer;
-let statusTimer;
-let bugsTimer;
+let appTimer = null;
+let statusTimer = null;
+let bugsTimer = null;
 
 const els = {
   body: document.body,
@@ -57,7 +57,19 @@ els.gateLoginForm.addEventListener("submit", (event) => {
 });
 
 function getToken() {
-  return localStorage.getItem("bm_token");
+  const token = localStorage.getItem("bm_token");
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem("bm_token");
+      localStorage.removeItem("bm_username");
+      return null;
+    }
+  } catch {
+    return null;
+  }
+  return token;
 }
 
 function getUsername() {
@@ -127,8 +139,10 @@ function doLogout(options = {}) {
   const { preserveTab = false } = options;
   localStorage.removeItem("bm_token");
   localStorage.removeItem("bm_username");
-  clearInterval(statusTimer);
-  clearInterval(bugsTimer);
+  clearTimeout(appTimer);
+  clearTimeout(statusTimer);
+  clearTimeout(bugsTimer);
+  appTimer = null;
   statusTimer = null;
   bugsTimer = null;
   updateAuthUI();
@@ -147,13 +161,11 @@ function switchTab(tab) {
   els.tabAdmin.hidden = !adminActive;
 
   if (adminActive && getToken()) {
-    void loadStatus();
-    void loadBugs();
-    statusTimer = statusTimer || window.setInterval(loadStatus, STATUS_POLL_MS);
-    bugsTimer = bugsTimer || window.setInterval(loadBugs, BUGS_POLL_MS);
+    if (!statusTimer) pollStatus();
+    if (!bugsTimer) pollBugs();
   } else {
-    clearInterval(statusTimer);
-    clearInterval(bugsTimer);
+    clearTimeout(statusTimer);
+    clearTimeout(bugsTimer);
     statusTimer = null;
     bugsTimer = null;
     syncAdminAccessState();
@@ -164,6 +176,21 @@ function syncAdminAccessState() {
   const isAuthed = Boolean(getToken());
   els.adminAccessGate.hidden = isAuthed;
   els.adminTelemetry.hidden = !isAuthed;
+}
+
+async function pollApps() {
+  await loadApps();
+  appTimer = setTimeout(pollApps, APP_POLL_MS);
+}
+
+async function pollStatus() {
+  await loadStatus();
+  if (getToken()) statusTimer = setTimeout(pollStatus, STATUS_POLL_MS);
+}
+
+async function pollBugs() {
+  await loadBugs();
+  if (getToken()) bugsTimer = setTimeout(pollBugs, BUGS_POLL_MS);
 }
 
 async function loadApps() {
@@ -393,6 +420,7 @@ async function loadBugs() {
     });
 
     if (response.status === 401) {
+      doLogout({ preserveTab: true });
       return;
     }
 
@@ -535,12 +563,13 @@ function safeUrl(url) {
 }
 
 function esc(value) {
-  const div = document.createElement("div");
-  div.textContent = value == null ? "" : String(value);
-  return div.innerHTML;
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 updateAuthUI();
 resetAdminPanels();
-void loadApps();
-appTimer = window.setInterval(loadApps, APP_POLL_MS);
+pollApps();

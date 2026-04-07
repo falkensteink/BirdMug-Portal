@@ -7,6 +7,9 @@
     "start": "node server.js",
     "dev": "SSH_HOST=falkensteink@192.168.5.2 node server.js"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",

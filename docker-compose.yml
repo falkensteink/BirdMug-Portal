@@ -2,13 +2,17 @@ services:
   # ── Production ──
   portal-prod:
     build: .
+    image: birdmug-portal:latest
     container_name: birdmug_portal
     profiles: ["prod"]
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    group_add:
+      - "111"
     environment:
       - PORT=${PORT}
+      - NODE_ENV=production
       - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
       - BUGFAIRY_URL=${BUGFAIRY_URL}
     ports:
