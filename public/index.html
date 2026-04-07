@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BirdMug Portal</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-active-tab="apps">
+  <div class="page-orbit orbit-left" aria-hidden="true"></div>
+  <div class="page-orbit orbit-right" aria-hidden="true"></div>
+
+  <div class="site-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <img src="/assets/birdmug-mark.svg" alt="" class="brand-mark">
+        <div class="brand-copy">
+          <span class="brand-name">BirdMug</span>
+          <span class="brand-subtitle">Portal / Service Ledger</span>
+        </div>
+      </div>
+
+      <nav class="mode-switch" aria-label="Portal sections">
+        <button type="button" class="tab-btn active" data-tab="apps">Public Index</button>
+        <button type="button" class="tab-btn" data-tab="admin" id="admin-tab-btn">Control Room</button>
+      </nav>
+
+      <div class="topbar-actions">
+        <div class="identity-chip" id="nav-user-wrap" hidden>
+          <span class="identity-label">Signed in as</span>
+          <span class="identity-value" id="nav-user"></span>
+        </div>
+        <button type="button" class="btn btn-secondary" id="signin-btn">Sign In</button>
+        <button type="button" class="btn btn-ghost" id="logout-btn" hidden>Logout</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section id="tab-apps" class="view-panel">
+        <section class="hero-panel">
+          <div class="hero-copy">
+            <p class="section-tag">BirdMug Network</p>
+            <h1>One index for public products, infrastructure, and operator access.</h1>
+            <p class="hero-text">
+              BirdMug Portal surfaces the live status of games, tools, and internal services without turning the page into a generic admin dashboard.
+            </p>
+            <div class="hero-actions">
+              <button type="button" class="btn btn-primary" id="hero-admin-btn">Open Control Room</button>
+              <a class="btn btn-secondary" href="#catalog-products">Browse Services</a>
+            </div>
+          </div>
+          <aside class="hero-aside">
+            <div class="hero-aside-header">
+              <span class="section-tag">Live Pulse</span>
+              <span class="hero-inline-status" id="hero-inline-status">Checking services</span>
+            </div>
+            <div class="hero-signal-grid" id="hero-signal-grid">
+              <div class="signal-card skeleton-card"></div>
+              <div class="signal-card skeleton-card"></div>
+              <div class="signal-card skeleton-card"></div>
+              <div class="signal-card skeleton-card"></div>
+            </div>
+          </aside>
+        </section>
+
+        <div id="error-banner" class="error-banner" hidden></div>
+
+        <section class="overview-strip" aria-label="System overview">
+          <article class="overview-card">
+            <span class="overview-label">Products Online</span>
+            <strong class="overview-value" id="apps-online-value">--</strong>
+            <span class="overview-detail" id="apps-online-detail">Loading live registry</span>
+          </article>
+          <article class="overview-card">
+            <span class="overview-label">Infrastructure Online</span>
+            <strong class="overview-value" id="infra-online-value">--</strong>
+            <span class="overview-detail" id="infra-online-detail">Loading live registry</span>
+          </article>
+          <article class="overview-card">
+            <span class="overview-label">Access</span>
+            <strong class="overview-value" id="access-state-value">Public</strong>
+            <span class="overview-detail" id="access-state-detail">Sign in for operations telemetry</span>
+          </article>
+          <article class="overview-card">
+            <span class="overview-label">Last Refresh</span>
+            <strong class="overview-value" id="last-updated-value">--</strong>
+            <span class="overview-detail" id="last-updated-detail">Waiting on first response</span>
+          </article>
+        </section>
+
+        <section class="catalog-section" id="catalog-products">
+          <div class="section-heading">
+            <div>
+              <p class="section-tag">Products</p>
+              <h2>Public-facing applications</h2>
+            </div>
+            <p class="section-copy">Games, tools, and client-facing services with direct entry points.</p>
+          </div>
+          <div class="service-grid service-grid-products" id="app-cards">
+            <div class="service-card skeleton-card tall"></div>
+            <div class="service-card skeleton-card tall"></div>
+            <div class="service-card skeleton-card tall"></div>
+          </div>
+        </section>
+
+        <section class="catalog-section">
+          <div class="section-heading">
+            <div>
+              <p class="section-tag">Infrastructure</p>
+              <h2>Internal systems and platform services</h2>
+            </div>
+            <p class="section-copy">Monitoring, storage, auth, and operational services behind the product surface.</p>
+          </div>
+          <div class="service-grid service-grid-infra" id="infra-cards">
+            <div class="service-card skeleton-card short"></div>
+            <div class="service-card skeleton-card short"></div>
+            <div class="service-card skeleton-card short"></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-admin" class="view-panel admin-view" hidden>
+        <section class="admin-intro">
+          <div>
+            <p class="section-tag">Operator Console</p>
+            <h1>Control room for BirdMug runtime health.</h1>
+            <p class="hero-text">Monitor host pressure, container state, and incoming bug flow from one surface.</p>
+          </div>
+          <div class="admin-note-card">
+            <span class="overview-label">Refresh cadence</span>
+            <strong class="overview-value">30s / 5m</strong>
+            <span class="overview-detail">Infrastructure polls every 30 seconds. Bug intake polls every 5 minutes.</span>
+          </div>
+        </section>
+
+        <section class="admin-access-gate" id="admin-access-gate" hidden>
+          <div class="admin-access-copy">
+            <p class="section-tag">Preview Mode</p>
+            <h2>Control room layout is visible. Live telemetry stays gated.</h2>
+            <p class="hero-text">You can browse the operations surface without interruption. Sign in only when you want real host metrics, container state, and bug intake data.</p>
+          </div>
+          <div class="admin-access-actions">
+            <div class="gate-stat">
+              <span class="overview-label">Current access</span>
+              <strong class="overview-value">Public</strong>
+              <span class="overview-detail">Read-only shell preview</span>
+            </div>
+            <form id="gate-login-form" class="gate-login-form">
+              <label class="field">
+                <span>Username</span>
+                <input id="gate-login-user" type="text" placeholder="operator" autocomplete="username">
+              </label>
+              <label class="field">
+                <span>Password</span>
+                <input id="gate-login-pass" type="password" placeholder="Password" autocomplete="current-password">
+              </label>
+              <button type="submit" class="btn btn-primary btn-block">Sign In for Live Data</button>
+              <div id="gate-login-error" class="login-error" role="status" aria-live="polite"></div>
+              <p class="login-register">No account yet? <a href="https://accounts.birdmug.com/register" target="_blank" rel="noopener">Create one</a></p>
+            </form>
+            <div class="gate-buttons">
+              <button type="button" class="btn btn-secondary" id="admin-gate-back">Back to Public Index</button>
+            </div>
+          </div>
+        </section>
+
+        <div id="admin-telemetry">
+          <section class="admin-metrics" id="stats">
+            <article class="metric-card skeleton-card tall"></article>
+            <article class="metric-card skeleton-card tall"></article>
+            <article class="metric-card skeleton-card tall"></article>
+            <article class="metric-card skeleton-card tall"></article>
+          </section>
+
+          <section class="admin-grid">
+            <div class="panel panel-wide" id="container-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="section-tag">Runtime</p>
+                  <h3>Containers</h3>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="empty-state">Loading container map...</div>
+              </div>
+            </div>
+
+            <div class="admin-sidebar">
+              <div class="panel" id="bugs-panel">
+                <div class="panel-header">
+                  <div>
+                    <p class="section-tag">Incident Flow</p>
+                    <h3>Recent Bugs</h3>
+                  </div>
+                </div>
+                <div class="panel-body">
+                  <div class="empty-state">Loading issue reports...</div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-header">
+                  <div>
+                    <p class="section-tag">Access</p>
+                    <h3>Session</h3>
+                  </div>
+                </div>
+                <div class="panel-body session-panel">
+                  <div class="session-line">
+                    <span>Audience</span>
+                    <strong>Authenticated BirdMug operators</strong>
+                  </div>
+                  <div class="session-line">
+                    <span>Token source</span>
+                    <strong>BirdMug Auth JWT</strong>
+                  </div>
+                  <div class="session-line">
+                    <span>Operator</span>
+                    <strong id="session-username">Not signed in</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

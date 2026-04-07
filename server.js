@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3080;
 const JWT_SECRET = process.env.BIRDMUG_JWT_SECRET || '';
 const BUGFAIRY_URL = process.env.BUGFAIRY_URL || 'https://bugs.birdmug.com';
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // SSH prefix for local dev (run commands on Toshi remotely)
 const SSH_HOST = process.env.SSH_HOST;
@@ -113,7 +114,7 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   res.setHeader('Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
+    "default-src 'self'; script-src 'self'; style-src 'self'; " +
     "img-src 'self' data:; connect-src 'self' https://accounts.birdmug.com; " +
     "font-src 'self'; frame-ancestors 'none';"
   );
@@ -125,6 +126,7 @@ const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 30 });
 app.use('/api/', apiLimiter);
 app.use('/', publicLimiter);
+app.use(express.static(PUBLIC_DIR));
 
 // ── Auth middleware ────────────────────────────────────────────────
 
@@ -167,8 +169,8 @@ async function getContainerMap() {
 
 // ── Routes ────────────────────────────────────────────────────────
 
-// Serve index.html
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// Serve the static portal shell
+app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
