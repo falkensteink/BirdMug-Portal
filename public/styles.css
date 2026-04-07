@@ -160,6 +160,8 @@ button {
 .brand-mark {
   width: 42px;
   height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
 }
 
 .brand-copy {
@@ -1080,6 +1082,8 @@ h3 {
 .footer-mark {
   width: 24px;
   height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
 }
 
 .footer-name {
