@@ -7,8 +7,15 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  build-image:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    uses: falkensteink/ci-templates/.github/workflows/docker-build-push.yml@main
+    permissions:
+      contents: read
+      packages: write
+
+  deploy:
+    needs: build-image
     uses: falkensteink/ci-templates/.github/workflows/toshi-deploy.yml@main
     with:
       repo-name: BirdMug-Portal
