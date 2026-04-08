@@ -18,6 +18,12 @@ services:
       - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
     ports:
       - "3080:3080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3080/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # ── Development ──
   portal-dev:
@@ -33,3 +39,9 @@ services:
       - BUGFAIRY_URL=${BUGFAIRY_URL}
     ports:
       - "3081:3080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3080/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

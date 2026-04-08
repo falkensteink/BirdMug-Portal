@@ -1,0 +1,14 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: falkensteink/ci-templates/.github/workflows/node-ci.yml@main
+    with:
+      node-version: "20"
+      has-tests: false
