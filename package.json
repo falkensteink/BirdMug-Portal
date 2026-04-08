@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "SSH_HOST=falkensteink@192.168.5.2 node server.js"
+    "dev": "SSH_HOST=falkensteink@192.168.5.2 node server.js",
+    "lint": "eslint ."
   },
   "engines": {
     "node": ">=18"
@@ -14,5 +15,9 @@
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0"
   }
 }
