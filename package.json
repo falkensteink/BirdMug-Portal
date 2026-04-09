@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "SSH_HOST=falkensteink@192.168.5.2 node server.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test test/"
   },
   "engines": {
     "node": ">=18"
