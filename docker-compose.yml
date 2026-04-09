@@ -25,6 +25,29 @@ services:
       retries: 3
       start_period: 15s
 
+  # ── Staging ──
+  portal-staging:
+    build: .
+    container_name: birdmug_portal_staging
+    profiles: ["staging"]
+    restart: "no"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    group_add:
+      - "111"
+    environment:
+      - PORT=${PORT}
+      - NODE_ENV=production
+      - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
+      - BUGFAIRY_URL=${BUGFAIRY_URL}
+      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3080/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   # ── Development ──
   portal-dev:
     build: .

@@ -1,0 +1,103 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BirdMug Portal API",
+    "version": "1.0.0",
+    "description": "App library and server dashboard"
+  },
+  "servers": [
+    { "url": "https://birdmug.com", "description": "Production" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": {
+                    "status": { "type": "string", "enum": ["ok"] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps": {
+      "get": {
+        "operationId": "getApps",
+        "summary": "Public app registry with status",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["apps", "ts"],
+                  "properties": {
+                    "apps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["id", "name", "description", "url", "category", "up"],
+                        "properties": {
+                          "id": { "type": "string" },
+                          "name": { "type": "string" },
+                          "description": { "type": "string" },
+                          "url": { "type": "string" },
+                          "category": { "type": "string", "enum": ["app", "infra", "auth"] },
+                          "up": { "type": "boolean" }
+                        }
+                      }
+                    },
+                    "ts": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "operationId": "getStatus",
+        "summary": "Full system status (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["ok", "ts"],
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "uptime": { "type": "string" },
+                    "load": { "type": "number" },
+                    "disk": { "type": "object" },
+                    "mem": { "type": "object" },
+                    "projects": { "type": "array" },
+                    "ts": { "type": "number" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  }
+}

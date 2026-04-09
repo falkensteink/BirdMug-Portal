@@ -16,7 +16,7 @@ jobs:
 
   deploy:
     needs: build-image
-    uses: falkensteink/ci-templates/.github/workflows/toshi-deploy.yml@main
+    uses: falkensteink/ci-templates/.github/workflows/toshi-staged-deploy.yml@main
     with:
       repo-name: BirdMug-Portal
       branch: main

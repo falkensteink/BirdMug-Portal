@@ -3,9 +3,11 @@ const { exec } = require('child_process');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
+const { logger, requestLogger } = require('./json-logger');
 
 const app = express();
 app.set('trust proxy', 1);
+app.use(requestLogger);
 const PORT = process.env.PORT || 3080;
 const JWT_SECRET = process.env.BIRDMUG_JWT_SECRET || '';
 const BUGFAIRY_URL = process.env.BUGFAIRY_URL || 'https://bugs.birdmug.com';
@@ -14,14 +16,14 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // Fail hard if JWT secret is missing in production
 if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
-  console.error('FATAL: BIRDMUG_JWT_SECRET is required in production');
+  logger.error('BIRDMUG_JWT_SECRET is required in production');
   process.exit(1);
 }
 
 // SSH prefix for local dev (run commands on Toshi remotely)
 const SSH_HOST = process.env.SSH_HOST;
 if (SSH_HOST && !/^[\w.@-]+$/.test(SSH_HOST)) {
-  console.error('FATAL: SSH_HOST contains invalid characters');
+  logger.error('SSH_HOST contains invalid characters');
   process.exit(1);
 }
 const SSH_PREFIX = SSH_HOST
@@ -29,7 +31,7 @@ const SSH_PREFIX = SSH_HOST
   : '';
 
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled rejection:', err);
+  logger.error('Unhandled rejection', { exc: String(err) });
 });
 
 // ── App Registry ──────────────────────────────────────────────────
@@ -255,7 +257,7 @@ app.get('/api/status', requireAuth, async (req, res) => {
 
     res.json({ ok: true, uptime, load, disk, mem, projects, ts: Date.now() });
   } catch (err) {
-    console.error('Status error:', err);
+    logger.error('Status fetch failed', { exc: String(err) });
     res.status(503).json({ ok: false, error: 'Failed to get status' });
   }
 });
@@ -291,7 +293,7 @@ app.post('/api/request-access', accessRequestLimiter, async (req, res) => {
 
   const message = `**Portal Access Request**\n| Field | Value |\n|---|---|\n| Name | ${name} |\n| Contact | ${contact} |\n| Reason | ${reason || 'Not provided'} |\n| Time | ${new Date().toISOString()} |`;
 
-  console.log('Access request:', { name, contact, reason });
+  logger.info('Access request received', { name, contact, reason });
 
   if (MATTERMOST_WEBHOOK_URL) {
     try {
@@ -301,7 +303,7 @@ app.post('/api/request-access', accessRequestLimiter, async (req, res) => {
         body: JSON.stringify({ text: message }),
       });
     } catch (err) {
-      console.error('Mattermost webhook failed:', err);
+      logger.error('Mattermost webhook failed', { exc: String(err) });
     }
   }
 
@@ -309,7 +311,7 @@ app.post('/api/request-access', accessRequestLimiter, async (req, res) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`BirdMug Portal -> http://localhost:${PORT}`);
+  logger.info(`BirdMug Portal started on port ${PORT}`);
 });
 
 process.on('SIGTERM', () => server.close(() => process.exit(0)));
