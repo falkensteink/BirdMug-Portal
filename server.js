@@ -156,7 +156,14 @@ function requireAuth(req, res, next) {
     || req.query.token || '';
   if (!token) return res.status(401).json({ error: 'Not authenticated' });
   try {
-    req.user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+    // Portal accepts any logged-in BirdMug user — every token carries the
+    // auth service itself in its aud array, so audience='accounts.birdmug.com'
+    // is the "valid BirdMug session" check without needing an app_id of our own.
+    req.user = jwt.verify(token, JWT_SECRET, {
+      algorithms: ['HS256'],
+      audience: 'accounts.birdmug.com',
+      issuer: 'accounts.birdmug.com',
+    });
     next();
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });
