@@ -83,6 +83,13 @@
                     "load": { "type": "number" },
                     "disk": { "type": "object" },
                     "mem": { "type": "object" },
+                    "temp": {
+                      "type": ["object", "null"],
+                      "properties": {
+                        "cpu_c": { "type": "number" },
+                        "crit_c": { "type": "number" }
+                      }
+                    },
                     "projects": { "type": "array" },
                     "ts": { "type": "number" }
                   }

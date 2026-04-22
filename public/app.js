@@ -279,8 +279,9 @@ function renderServiceCards(apps, groupLabel) {
   }
 
   return apps.map((app) => {
-    const url = safeUrl(app.url);
-    const host = getHostname(app.url);
+    const hasUrl = Boolean(app.url);
+    const url = hasUrl ? safeUrl(app.url) : "";
+    const host = hasUrl ? getHostname(app.url) : "Internal service";
     const statusClass = app.up ? "ok" : "down";
     const statusText = app.up ? "Online" : "Degraded";
 
@@ -300,7 +301,7 @@ function renderServiceCards(apps, groupLabel) {
         </div>
         <div class="service-card-footer">
           <div class="service-links">
-            <a class="btn btn-secondary service-link link-arrow" href="${url}" target="_blank" rel="noopener">Open service</a>
+            ${hasUrl ? `<a class="btn btn-secondary service-link link-arrow" href="${url}" target="_blank" rel="noopener">Open service</a>` : ""}
             ${app.itch ? `<a class="btn btn-ghost service-link link-arrow" href="${safeUrl(app.itch)}" target="_blank" rel="noopener">itch.io</a>` : ""}
           </div>
         </div>
@@ -338,12 +339,31 @@ async function loadStatus() {
 function renderStats(data) {
   const loadClass = data.load < 1.5 ? "ok" : data.load < 3 ? "warn" : "down";
 
-  els.stats.innerHTML = [
+  const cards = [
     renderMetricCard("Uptime", data.uptime, "Host availability"),
     renderMetricCard("Load (1m)", data.load ?? "-", "Current system pressure", loadClass),
     renderMetricCard("Memory", data.mem.used, `${data.mem.available} free / ${data.mem.total} total`),
     renderMetricCard("Disk", data.disk.pct, `${data.disk.used} used / ${data.disk.size} total`),
-  ].join("");
+    renderTempCard(data.temp),
+  ];
+
+  els.stats.innerHTML = cards.join("");
+}
+
+function renderTempCard(temp) {
+  if (!temp || !Number.isFinite(temp.cpu_c)) {
+    return renderMetricCard("CPU Temp", "-", "Sensor unavailable");
+  }
+  const crit = temp.crit_c || 100;
+  // Warn >= 75% of crit; danger >= 90% of crit. On a 100°C crit, that's 75°C / 90°C.
+  const ratio = temp.cpu_c / crit;
+  const cls = ratio >= 0.9 ? "down" : ratio >= 0.75 ? "warn" : "ok";
+  return renderMetricCard(
+    "CPU Temp",
+    `${temp.cpu_c}°C`,
+    `Critical at ${crit}°C`,
+    cls
+  );
 }
 
 function renderMetricCard(label, value, detail, stateClass = "") {
@@ -490,6 +510,7 @@ function renderPanelError(message) {
 
 function resetAdminPanels() {
   els.stats.innerHTML = `
+    <article class="metric-card skeleton-card tall"></article>
     <article class="metric-card skeleton-card tall"></article>
     <article class="metric-card skeleton-card tall"></article>
     <article class="metric-card skeleton-card tall"></article>

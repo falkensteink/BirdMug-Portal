@@ -72,6 +72,30 @@ const APP_REGISTRY = {
     containers: ['npcpm-backend-prod', 'npcpm-postgres-prod', 'npcpm-cloudflared'],
     primary: 'npcpm-backend-prod',
   },
+  askmynovel: {
+    name: 'Ask My Novel',
+    description: 'ConvergenceZone reader companion — ask questions about the novel',
+    url: 'https://cz.birdmug.com',
+    category: 'app',
+    containers: ['askmynovel_app', 'askmynovel_postgres', 'askmynovel_cloudflared'],
+    primary: 'askmynovel_app',
+  },
+  dm_backend: {
+    name: 'Dungeon Master',
+    description: 'Campaign + library backend for the DM desktop app',
+    url: 'https://dm.birdmug.com',
+    category: 'app',
+    containers: ['dm_backend', 'dm_backend_cloudflared'],
+    primary: 'dm_backend',
+  },
+  infinite_knowledge: {
+    name: 'Infinite Knowledge',
+    description: 'RAG / knowledge retrieval (Kyle-Rag) with MCP server',
+    url: 'https://ik.birdmug.com',
+    category: 'app',
+    containers: ['kyle_rag_api', 'kyle_rag_worker', 'kyle_rag_mcp', 'kyle_rag_db', 'infinite_knowledge_cloudflared'],
+    primary: 'kyle_rag_api',
+  },
   uptime_kuma: {
     name: 'Uptime Kuma',
     description: 'Service monitoring dashboard',
@@ -119,6 +143,46 @@ const APP_REGISTRY = {
     category: 'auth',
     containers: ['birdmug_auth_server', 'birdmug_auth_cloudflared'],
     primary: 'birdmug_auth_server',
+  },
+  n8n: {
+    name: 'n8n',
+    description: 'Workflow automation engine',
+    url: 'https://n8n.birdmug.com',
+    category: 'infra',
+    containers: ['n8n', 'n8n_postgres', 'n8n_cloudflared'],
+    primary: 'n8n',
+  },
+  toshi_bot: {
+    name: 'Toshi Bot',
+    description: 'Deploy bot + GitHub webhook receiver + Mattermost slash commands',
+    url: 'https://bot.birdmug.com',
+    category: 'infra',
+    containers: ['toshi_bot', 'toshi_bot_cloudflared'],
+    primary: 'toshi_bot',
+  },
+  log_stack: {
+    name: 'Log Stack',
+    description: 'Centralized logs — Grafana + Loki + Promtail',
+    url: 'https://logs.birdmug.com',
+    category: 'infra',
+    containers: ['loki', 'promtail', 'grafana', 'logstack_cloudflared'],
+    primary: 'grafana',
+  },
+  server_connect: {
+    name: 'Server Connect',
+    description: 'Legacy Toshi dashboard (pre-Portal)',
+    url: 'https://toshi.birdmug.com',
+    category: 'infra',
+    containers: ['toshi_hub', 'toshi_cloudflared'],
+    primary: 'toshi_hub',
+  },
+  cz_audiobook: {
+    name: 'CZ Audiobook',
+    description: 'Batch audiobook generator for ConvergenceZone',
+    url: null,
+    category: 'infra',
+    containers: ['cz_audiobook'],
+    primary: 'cz_audiobook',
   },
 };
 
@@ -202,24 +266,28 @@ app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// Public: app status (green/red only, no container details)
+// Public: app status (green/red only, no container details).
+// Services without a public URL (e.g. batch jobs like cz_audiobook) are
+// excluded from the public index but still appear in /api/status for operators.
 app.get('/api/apps', async (req, res) => {
   try {
     const containerMap = await getContainerMap();
-    const apps = Object.entries(APP_REGISTRY).map(([id, app]) => {
-      const primaryStatus = containerMap[app.primary] || '';
-      const up = primaryStatus.toLowerCase().startsWith('up');
-      const entry = {
-        id,
-        name: app.name,
-        description: app.description,
-        url: app.url,
-        category: app.category,
-        up,
-      };
-      if (app.itch) entry.itch = app.itch;
-      return entry;
-    });
+    const apps = Object.entries(APP_REGISTRY)
+      .filter(([, app]) => Boolean(app.url))
+      .map(([id, app]) => {
+        const primaryStatus = containerMap[app.primary] || '';
+        const up = primaryStatus.toLowerCase().startsWith('up');
+        const entry = {
+          id,
+          name: app.name,
+          description: app.description,
+          url: app.url,
+          category: app.category,
+          up,
+        };
+        if (app.itch) entry.itch = app.itch;
+        return entry;
+      });
     res.json({ apps, ts: Date.now() });
   } catch {
     res.status(503).json({ apps: [], error: 'Cannot reach Docker', ts: Date.now() });
@@ -229,10 +297,12 @@ app.get('/api/apps', async (req, res) => {
 // Admin: full server status + per-container details
 app.get('/api/status', requireAuth, async (req, res) => {
   try {
-    const [uptimeRaw, diskRaw, memRaw, containerMap] = await Promise.all([
+    const [uptimeRaw, diskRaw, memRaw, tempRaw, containerMap] = await Promise.all([
       run('uptime'),
       run('df -h / | tail -1'),
       run('free -h | grep Mem'),
+      // CPU package temp + critical threshold (millidegrees C). Fallback: empty string.
+      run('cat /sys/class/hwmon/hwmon1/temp1_input /sys/class/hwmon/hwmon1/temp1_crit 2>/dev/null').catch(() => ''),
       getContainerMap(),
     ]);
 
@@ -250,6 +320,18 @@ app.get('/api/status', requireAuth, async (req, res) => {
     const memParts = memRaw.split(/\s+/);
     const mem = { total: memParts[1], used: memParts[2], available: memParts[6] };
 
+    // Parse CPU temperature — coretemp reports millidegrees C
+    let temp = null;
+    if (tempRaw) {
+      const [curRaw, critRaw] = tempRaw.split('\n').map(s => parseInt(s, 10));
+      if (Number.isFinite(curRaw)) {
+        temp = {
+          cpu_c: Math.round(curRaw / 1000),
+          crit_c: Number.isFinite(critRaw) ? Math.round(critRaw / 1000) : 100,
+        };
+      }
+    }
+
     // Group containers by project
     const projects = Object.entries(APP_REGISTRY).map(([id, app]) => ({
       id,
@@ -262,7 +344,7 @@ app.get('/api/status', requireAuth, async (req, res) => {
       })),
     }));
 
-    res.json({ ok: true, uptime, load, disk, mem, projects, ts: Date.now() });
+    res.json({ ok: true, uptime, load, disk, mem, temp, projects, ts: Date.now() });
   } catch (err) {
     logger.error('Status fetch failed', { exc: String(err) });
     res.status(503).json({ ok: false, error: 'Failed to get status' });
