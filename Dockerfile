@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY server.js ./
+COPY json-logger.js ./
 COPY public ./public
 RUN chown -R app:app /app
 USER app
