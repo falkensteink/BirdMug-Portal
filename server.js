@@ -236,8 +236,9 @@ function requireAuth(req, res, next) {
   // Dev-only escape hatch: only bypass auth when the operator explicitly set
   // DEV_UNSAFE_OPEN_AUTH=1 at boot. Otherwise the server already exited above.
   if (!JWT_SECRET && DEV_UNSAFE_OPEN_AUTH) return next();
-  const token = (req.headers.authorization || '').replace('Bearer ', '').trim()
-    || req.query.token || '';
+  // Tokens via query params leak into access logs, Referer headers, browser
+  // history, and link shares. Authorization header only.
+  const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
   if (!token) return res.status(401).json({ error: 'Not authenticated' });
   try {
     // Portal accepts any logged-in BirdMug user — every token carries the
