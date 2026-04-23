@@ -14,10 +14,28 @@ const BUGFAIRY_URL = process.env.BUGFAIRY_URL || 'https://bugs.birdmug.com';
 const MATTERMOST_WEBHOOK_URL = process.env.MATTERMOST_WEBHOOK_URL || '';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
-// Fail hard if JWT secret is missing in production
-if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
-  logger.error('BIRDMUG_JWT_SECRET is required in production');
-  process.exit(1);
+// Explicit opt-in for running locally without auth. Never set this in prod.
+const DEV_UNSAFE_OPEN_AUTH = process.env.DEV_UNSAFE_OPEN_AUTH === '1';
+
+// Fail-closed at boot: a missing JWT secret must not silently open the portal.
+// Either the operator has a real secret, OR they explicitly opted into open mode.
+if (!JWT_SECRET) {
+  if (DEV_UNSAFE_OPEN_AUTH) {
+    logger.warn(
+      '='.repeat(70) + '\n' +
+      'BirdMug Portal running with NO AUTH (DEV_UNSAFE_OPEN_AUTH=1).\n' +
+      'This must be LOCAL DEV ONLY. Any caller can hit every admin endpoint.\n' +
+      'Set BIRDMUG_JWT_SECRET from Doppler (birdmug-studios/prd) for any deploy.\n' +
+      '='.repeat(70)
+    );
+  } else {
+    logger.error(
+      'BIRDMUG_JWT_SECRET is not set. Refusing to start with silent open auth. ' +
+      'Pull the secret from Doppler (birdmug-studios/prd), or set ' +
+      'DEV_UNSAFE_OPEN_AUTH=1 explicitly for local dev.'
+    );
+    process.exit(1);
+  }
 }
 
 // SSH prefix for local dev (run commands on Toshi remotely)
@@ -215,7 +233,9 @@ app.use(express.static(PUBLIC_DIR));
 // ── Auth middleware ────────────────────────────────────────────────
 
 function requireAuth(req, res, next) {
-  if (!JWT_SECRET) return next(); // Auth disabled in dev (production exits at startup)
+  // Dev-only escape hatch: only bypass auth when the operator explicitly set
+  // DEV_UNSAFE_OPEN_AUTH=1 at boot. Otherwise the server already exited above.
+  if (!JWT_SECRET && DEV_UNSAFE_OPEN_AUTH) return next();
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim()
     || req.query.token || '';
   if (!token) return res.status(401).json({ error: 'Not authenticated' });
