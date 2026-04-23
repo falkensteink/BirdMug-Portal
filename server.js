@@ -401,13 +401,14 @@ const accessRequestLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3 });
 // webhook with a megabyte of junk.
 function escapeForMattermostCell(value) {
   const s = String(value ?? '').slice(0, 500);
-  // Strip control chars + newlines, replace with space
-  const noCtrl = s.replace(/[\r\n\t\x00-\x1F\x7F]+/g, ' ');
+  // Strip control chars + newlines, replace with space.
+  // eslint-disable-next-line no-control-regex
+  const noCtrl = s.replace(/[\r\n\t -]+/g, ' ');
   // Escape Markdown-meaningful chars + `|` (Mattermost table separator) and
   // `@`/`#` to neuter @here/@channel and channel links.
   return noCtrl
     .replace(/\\/g, '\\\\')
-    .replace(/([|`*_~\[\](){}#@<>])/g, '\\$1')
+    .replace(/([|`*_~[\](){}#@<>])/g, '\\$1')
     .trim() || '(empty)';
 }
 
