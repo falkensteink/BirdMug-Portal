@@ -395,15 +395,61 @@ app.get('/api/bugs', requireAuth, async (req, res) => {
 
 // Access request — notifies operator for approval
 const accessRequestLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3 });
+// Escape Mattermost Markdown so user-supplied values can't inject links,
+// mentions, bold/italic, code fences, pipes (which break table columns), or
+// newlines (which break table rows). Clamp length so someone can't spam the
+// webhook with a megabyte of junk.
+function escapeForMattermostCell(value) {
+  const s = String(value ?? '').slice(0, 500);
+  // Strip control chars + newlines, replace with space
+  const noCtrl = s.replace(/[\r\n\t\x00-\x1F\x7F]+/g, ' ');
+  // Escape Markdown-meaningful chars + `|` (Mattermost table separator) and
+  // `@`/`#` to neuter @here/@channel and channel links.
+  return noCtrl
+    .replace(/\\/g, '\\\\')
+    .replace(/([|`*_~\[\](){}#@<>])/g, '\\$1')
+    .trim() || '(empty)';
+}
+
+// Simple shape validation before anything reaches the Mattermost webhook.
+const ACCESS_REQUEST_MAX_LEN = 300;
+function validateAccessField(label, value, required = true) {
+  if (value == null || String(value).trim() === '') {
+    return required ? `${label} is required.` : null;
+  }
+  if (String(value).length > ACCESS_REQUEST_MAX_LEN) {
+    return `${label} is too long (max ${ACCESS_REQUEST_MAX_LEN} chars).`;
+  }
+  return null;
+}
+
 app.post('/api/request-access', accessRequestLimiter, async (req, res) => {
   const { name, contact, reason } = req.body || {};
-  if (!name || !contact) {
-    return res.status(400).json({ error: 'Name and contact are required.' });
+
+  const errors = [
+    validateAccessField('Name', name),
+    validateAccessField('Contact', contact),
+    validateAccessField('Reason', reason, false),
+  ].filter(Boolean);
+  if (errors.length) {
+    return res.status(400).json({ error: errors.join(' ') });
   }
 
-  const message = `**Portal Access Request**\n| Field | Value |\n|---|---|\n| Name | ${name} |\n| Contact | ${contact} |\n| Reason | ${reason || 'Not provided'} |\n| Time | ${new Date().toISOString()} |`;
+  const safeName = escapeForMattermostCell(name);
+  const safeContact = escapeForMattermostCell(contact);
+  const safeReason = escapeForMattermostCell(reason || 'Not provided');
+  const timestamp = new Date().toISOString();
 
-  logger.info('Access request received', { name, contact, reason });
+  const message =
+    '**Portal Access Request**\n' +
+    '| Field | Value |\n' +
+    '|---|---|\n' +
+    `| Name | ${safeName} |\n` +
+    `| Contact | ${safeContact} |\n` +
+    `| Reason | ${safeReason} |\n` +
+    `| Time | ${timestamp} |`;
+
+  logger.info('Access request received', { name: safeName, contact: safeContact });
 
   if (MATTERMOST_WEBHOOK_URL) {
     try {
