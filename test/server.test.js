@@ -45,6 +45,9 @@ before(async () => {
   delete process.env.SSH_HOST;
   delete process.env.MATTERMOST_WEBHOOK_URL;
   process.env.NODE_ENV = 'test';
+  // These tests exercise the no-auth dev-mode path; server.js now requires an
+  // explicit opt-in so an unconfigured prod deploy can't silently open auth.
+  process.env.DEV_UNSAFE_OPEN_AUTH = '1';
 
   // Require the app module — server.js starts listening on require,
   // so we need to override PORT to use a dynamic port.
