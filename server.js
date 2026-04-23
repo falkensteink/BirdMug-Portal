@@ -92,7 +92,7 @@ const APP_REGISTRY = {
   },
   askmynovel: {
     name: 'Ask My Novel',
-    description: 'ConvergenceZone reader companion — ask questions about the novel',
+    description: 'ConvergenceZone writing studio — web editor + retrieval + 11 review agents. Ask tab, Studio tab, and Audiobook player.',
     url: 'https://cz.birdmug.com',
     category: 'app',
     containers: ['askmynovel_app', 'askmynovel_postgres', 'askmynovel_cloudflared'],
