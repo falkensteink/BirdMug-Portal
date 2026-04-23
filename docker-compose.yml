@@ -27,7 +27,7 @@ services:
     image: birdmug-portal:latest
     container_name: birdmug_portal
     profiles: ["prod"]
-    restart: unless-stopped
+    restart: on-failure:3
     depends_on:
       - docker_socket_proxy
     networks:
@@ -78,7 +78,7 @@ services:
     build: .
     container_name: birdmug_portal_dev
     profiles: ["dev"]
-    restart: unless-stopped
+    restart: on-failure:3
     depends_on:
       - docker_socket_proxy
     networks:
