@@ -8,7 +8,7 @@ services:
   docker_socket_proxy:
     image: tecnativa/docker-socket-proxy:latest
     container_name: portal_docker_socket_proxy
-    restart: unless-stopped
+    restart: on-failure:3
     environment:
       # 1 = allow, 0 = deny. Default is all 0; we only allow what the portal reads.
       CONTAINERS: 1
@@ -20,6 +20,15 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - portal_net
+    healthcheck:
+      # tecnativa/docker-socket-proxy exposes an HTTP shim on :2375.
+      # A TCP-socket probe is enough to confirm it's listening — no
+      # need to call a specific Docker endpoint.
+      test: ["CMD", "sh", "-c", "exec 3<>/dev/tcp/localhost/2375 && echo ok"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # ── Production ──
   portal-prod:
