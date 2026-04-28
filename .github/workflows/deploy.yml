@@ -20,5 +20,11 @@ jobs:
     with:
       repo-name: BirdMug-Portal
       branch: main
+      # Poll the public health URL after triggering. Without this, the
+      # workflow goes green on toshi-bot's webhook ack — i.e. when the
+      # deploy is *queued*, not when it's done. That gap masked the
+      # 2026-04-28 outage; the run reported success while staged-deploy
+      # had silently died on a stale infinite-recursion bug.
+      health-url: https://birdmug.com/health
     secrets:
       TOSHI_DEPLOY_SECRET: ${{ secrets.TOSHI_DEPLOY_SECRET }}
