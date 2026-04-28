@@ -13,3 +13,8 @@ jobs:
       node-version: "20"
       has-tests: true
       test-command: "npm test"
+
+  compose-lint:
+    uses: falkensteink/ci-templates/.github/workflows/compose-lint.yml@main
+    with:
+      compose-files: "docker-compose.yml"
