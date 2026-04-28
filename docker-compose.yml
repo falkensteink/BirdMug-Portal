@@ -50,9 +50,13 @@ services:
       # The docker CLI respects this — no direct socket mount needed.
       - DOCKER_HOST=tcp://docker_socket_proxy:2375
     ports:
-      - "3080:3033"
+      - "3080:${PORT}"
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3033/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      # Read PORT from the container's env at runtime so the probe always
+      # matches what Node is actually bound to. Hardcoding here is what
+      # caused the 2026-04-28 7-hour outage (Doppler PORT=3080, compose
+      # hardcoded 3033, healthcheck always failed, watchdog churned every 5m).
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:'+process.env.PORT+'/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
