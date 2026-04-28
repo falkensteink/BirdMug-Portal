@@ -22,9 +22,10 @@ services:
       - portal_net
     healthcheck:
       # tecnativa/docker-socket-proxy exposes an HTTP shim on :2375.
+      # Use wget against /_ping — image shell is BusyBox ash which lacks bash /dev/tcp.
       # A TCP-socket probe is enough to confirm it's listening — no
       # need to call a specific Docker endpoint.
-      test: ["CMD", "sh", "-c", "exec 3<>/dev/tcp/localhost/2375 && echo ok"]
+      test: ["CMD", "sh", "-c", "wget -q -O- http://localhost:2375/_ping || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
