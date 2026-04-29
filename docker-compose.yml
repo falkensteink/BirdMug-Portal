@@ -43,15 +43,23 @@ services:
     networks:
       - portal_net
     environment:
-      - PORT=${PORT}
+      # Portal-namespaced env from birdmug-studios/prd. PORT and
+      # MATTERMOST_WEBHOOK_URL are passed BOTH as PORTAL_* (what server.js
+      # reads) and as the legacy unprefixed names (what the compose-level
+      # healthcheck `process.env.PORT` and the host-port mapping below
+      # consume). Both alias to the same Doppler-side value so they can't
+      # drift; the legacy aliases drop in a follow-up PR once tests confirm.
+      - PORTAL_PORT=${PORTAL_PORT}
+      - PORT=${PORTAL_PORT}
+      - PORTAL_MATTERMOST_WEBHOOK_URL=${PORTAL_MATTERMOST_WEBHOOK_URL}
+      - MATTERMOST_WEBHOOK_URL=${PORTAL_MATTERMOST_WEBHOOK_URL}
       - NODE_ENV=production
       - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
       - BUGFAIRY_URL=${BUGFAIRY_URL}
-      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
       # The docker CLI respects this — no direct socket mount needed.
       - DOCKER_HOST=tcp://docker_socket_proxy:2375
     ports:
-      - "3080:${PORT}"
+      - "3080:${PORTAL_PORT}"
     healthcheck:
       # Read PORT from the container's env at runtime so the probe always
       # matches what Node is actually bound to. Hardcoding here is what
@@ -74,11 +82,19 @@ services:
     networks:
       - portal_net
     environment:
-      - PORT=${PORT}
+      # Portal-namespaced env from birdmug-studios/prd. PORT and
+      # MATTERMOST_WEBHOOK_URL are passed BOTH as PORTAL_* (what server.js
+      # reads) and as the legacy unprefixed names (what the compose-level
+      # healthcheck `process.env.PORT` and the host-port mapping below
+      # consume). Both alias to the same Doppler-side value so they can't
+      # drift; the legacy aliases drop in a follow-up PR once tests confirm.
+      - PORTAL_PORT=${PORTAL_PORT}
+      - PORT=${PORTAL_PORT}
+      - PORTAL_MATTERMOST_WEBHOOK_URL=${PORTAL_MATTERMOST_WEBHOOK_URL}
+      - MATTERMOST_WEBHOOK_URL=${PORTAL_MATTERMOST_WEBHOOK_URL}
       - NODE_ENV=production
       - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
       - BUGFAIRY_URL=${BUGFAIRY_URL}
-      - MATTERMOST_WEBHOOK_URL=${MATTERMOST_WEBHOOK_URL}
       - DOCKER_HOST=tcp://docker_socket_proxy:2375
     healthcheck:
       # Read PORT from runtime env so the probe always matches what Node is
@@ -100,12 +116,13 @@ services:
     networks:
       - portal_net
     environment:
-      - PORT=${PORT}
+      - PORTAL_PORT=${PORTAL_PORT}
+      - PORT=${PORTAL_PORT}
       - BIRDMUG_JWT_SECRET=${BIRDMUG_JWT_SECRET}
       - BUGFAIRY_URL=${BUGFAIRY_URL}
       - DOCKER_HOST=tcp://docker_socket_proxy:2375
     ports:
-      - "3081:${PORT}"
+      - "3081:${PORTAL_PORT}"
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:'+process.env.PORT+'/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
       interval: 30s

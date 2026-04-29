@@ -8,10 +8,18 @@ const { logger, requestLogger } = require('./json-logger');
 const app = express();
 app.set('trust proxy', 1);
 app.use(requestLogger);
-const PORT = process.env.PORT || 3080;
+// PORT and MATTERMOST_WEBHOOK_URL are namespaced to PORTAL_* because
+// birdmug-studios is shared with Spellstorm/SCS/DOD/bug-fairy/ai-pulse.
+// bug-fairy reads MATTERMOST_WEBHOOK_URL with a different value (its
+// own chat channel), so an unprefixed name would clobber its routing.
+// PORTAL_PORT keeps the pattern symmetric and avoids future collisions.
+// Old names kept as fallback for the cutover window — deletes can land
+// in a follow-up PR once we're confident no env still ships PORT/etc.
+const PORT = process.env.PORTAL_PORT || process.env.PORT || 3080;
 const JWT_SECRET = process.env.BIRDMUG_JWT_SECRET || '';
 const BUGFAIRY_URL = process.env.BUGFAIRY_URL || 'https://bugs.birdmug.com';
-const MATTERMOST_WEBHOOK_URL = process.env.MATTERMOST_WEBHOOK_URL || '';
+const MATTERMOST_WEBHOOK_URL =
+  process.env.PORTAL_MATTERMOST_WEBHOOK_URL || process.env.MATTERMOST_WEBHOOK_URL || '';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // Explicit opt-in for running locally without auth. Never set this in prod.
