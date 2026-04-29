@@ -226,10 +226,14 @@ async function loadApps() {
     const data = await response.json();
     const apps = (data.apps || []).filter((app) => app.category === "app");
     const infra = (data.apps || []).filter((app) => app.category !== "app");
-    const totalOnline = data.apps ? data.apps.filter((app) => app.up).length : 0;
+    // up is now nullable: true | false | null. Only count `true` as online;
+    // null ("Docker unreachable, can't tell") is its own state, not offline.
+    const totalOnline = data.apps ? data.apps.filter((app) => app.up === true).length : 0;
     const totalServices = data.apps ? data.apps.length : 0;
 
-    if (data.error) {
+    if (data.docker_unreachable) {
+      showError("Docker socket unreachable — registry is current, but live status is unknown.");
+    } else if (data.error) {
       showError(data.error);
     } else {
       hideError();
@@ -237,7 +241,7 @@ async function loadApps() {
 
     els.appCards.innerHTML = renderServiceCards(apps, "Products");
     els.infraCards.innerHTML = renderServiceCards(infra, "Infrastructure");
-    renderHeroSignals(apps, infra, totalOnline, totalServices);
+    renderHeroSignals(apps, infra, totalOnline, totalServices, Boolean(data.docker_unreachable));
   } catch (error) {
     showError(`Error: ${error.message}`);
     els.heroInlineStatus.textContent = "Registry unavailable";
@@ -247,13 +251,20 @@ async function loadApps() {
   }
 }
 
-function renderHeroSignals(apps, infra, totalOnline, totalServices) {
-  const appOnline = apps.filter((app) => app.up).length;
-  const infraOnline = infra.filter((app) => app.up).length;
-  const heroClass = totalOnline === totalServices ? "ok" : totalOnline > 0 ? "warn" : "down";
+function renderHeroSignals(apps, infra, totalOnline, totalServices, dockerUnreachable = false) {
+  const appOnline = apps.filter((app) => app.up === true).length;
+  const infraOnline = infra.filter((app) => app.up === true).length;
+  // When Docker is unreachable, every app's `up` is null; don't paint the
+  // hero red — that would imply everything is down, which we can't actually
+  // confirm. Show "warn" + a status string that names the cause.
+  const heroClass = dockerUnreachable
+    ? "warn"
+    : totalOnline === totalServices ? "ok" : totalOnline > 0 ? "warn" : "down";
 
   els.heroInlineStatus.className = `hero-inline-status ${heroClass}`;
-  els.heroInlineStatus.textContent = `${totalOnline}/${totalServices} services online`;
+  els.heroInlineStatus.textContent = dockerUnreachable
+    ? `${totalServices} services tracked · status unknown`
+    : `${totalOnline}/${totalServices} services online`;
 
   els.heroSignalGrid.innerHTML = [
     renderSignalCard("Registry", String(totalServices), "Tracked services"),
@@ -282,8 +293,10 @@ function renderServiceCards(apps, groupLabel) {
     const hasUrl = Boolean(app.url);
     const url = hasUrl ? safeUrl(app.url) : "";
     const host = hasUrl ? getHostname(app.url) : "Internal service";
-    const statusClass = app.up ? "ok" : "down";
-    const statusText = app.up ? "Online" : "Degraded";
+    // Three states: true → Online (green), false → Degraded (red),
+    // null → Unknown (grey, "Docker unreachable, can't tell").
+    const statusClass = app.up === true ? "ok" : app.up === false ? "down" : "unknown";
+    const statusText = app.up === true ? "Online" : app.up === false ? "Degraded" : "Unknown";
 
     return `
       <article class="service-card">

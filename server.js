@@ -319,32 +319,45 @@ app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// Public: app status (green/red only, no container details).
+// Public: app status (green/red/unknown, no container details).
 // Services without a public URL (e.g. batch jobs like cz_audiobook) are
 // excluded from the public index but still appear in /api/status for operators.
+//
+// Docker socket-proxy outages (transient dockerd hiccups, restart windows,
+// proxy container down) used to swap the response for `apps: []` + 503,
+// which then tripped Arbiter L022's `every project listed in /api/apps`
+// check against every fleet project — see falkensteink/BirdMug-Portal#19.
+// "Is this app deployed?" and "is this app currently up?" are two different
+// questions; the registry is static + in-process and always answerable, so
+// we always return it. `up` becomes nullable: true | false | null
+// ("unknown — Docker unreachable"), and `docker_unreachable: true` is set
+// at the top level so the frontend can render a banner.
 app.get('/api/apps', async (req, res) => {
+  let containerMap = null;
   try {
-    const containerMap = await getContainerMap();
-    const apps = Object.entries(APP_REGISTRY)
-      .filter(([, app]) => Boolean(app.url))
-      .map(([id, app]) => {
-        const primaryStatus = containerMap[app.primary] || '';
-        const up = primaryStatus.toLowerCase().startsWith('up');
-        const entry = {
-          id,
-          name: app.name,
-          description: app.description,
-          url: app.url,
-          category: app.category,
-          up,
-        };
-        if (app.itch) entry.itch = app.itch;
-        return entry;
-      });
-    res.json({ apps, ts: Date.now() });
+    containerMap = await getContainerMap();
   } catch {
-    res.status(503).json({ apps: [], error: 'Cannot reach Docker', ts: Date.now() });
+    // Docker unreachable — registry is still valid, just can't compute up.
   }
+  const apps = Object.entries(APP_REGISTRY)
+    .filter(([, app]) => Boolean(app.url))
+    .map(([id, app]) => {
+      const entry = {
+        id,
+        name: app.name,
+        description: app.description,
+        url: app.url,
+        category: app.category,
+        up: containerMap === null
+          ? null
+          : (containerMap[app.primary] || '').toLowerCase().startsWith('up'),
+      };
+      if (app.itch) entry.itch = app.itch;
+      return entry;
+    });
+  const body = { apps, ts: Date.now() };
+  if (containerMap === null) body.docker_unreachable = true;
+  res.json(body);
 });
 
 // Admin: full server status + per-container details
