@@ -6,6 +6,11 @@ on:
     types: [completed]
     branches: [main]
 
+# Queue concurrent deploys instead of cancelling.
+concurrency:
+  group: deploy-${{ github.repository }}-main
+  cancel-in-progress: false
+
 jobs:
   build-image:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
