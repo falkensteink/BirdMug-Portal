@@ -125,14 +125,47 @@ describe('GET /', () => {
 });
 
 describe('GET /api/apps', () => {
-  it('returns JSON with apps array and ts', async () => {
-    // Docker is not running in test, so this will return 503
-    // which is still a valid response shape
+  it('returns 200 with apps array and ts even when Docker is unreachable', async () => {
+    // Docker is not running in test, so getContainerMap throws.
+    // After the #19 fix, /api/apps catches that and returns the registry
+    // anyway with `up: null` per app + `docker_unreachable: true` flagged.
+    // 503 is no longer a valid response shape on this route.
     const res = await request('/api/apps');
-    // Either 200 (docker available) or 503 (docker unavailable)
-    assert.ok([200, 503].includes(res.status));
+    assert.equal(res.status, 200);
     assert.ok(Array.isArray(res.body.apps));
     assert.ok(typeof res.body.ts === 'number');
+  });
+
+  it('returns docker_unreachable: true when Docker is unreachable', async () => {
+    // No Docker socket in test → the docker-unreachable branch always fires.
+    const res = await request('/api/apps');
+    assert.equal(res.body.docker_unreachable, true);
+  });
+
+  it('returns the full registry (non-empty) on Docker outage', async () => {
+    // The docker-outage failure mode used to swap the response for
+    // `apps: []`. After #19 the registry comes through regardless.
+    const res = await request('/api/apps');
+    assert.ok(res.body.apps.length > 0,
+      'expected non-empty registry even when Docker is unreachable');
+  });
+
+  it('sets up: null on every app when Docker is unreachable', async () => {
+    const res = await request('/api/apps');
+    for (const app of res.body.apps) {
+      assert.equal(app.up, null,
+        `app ${app.id} should have up:null when Docker is unreachable, got ${app.up}`);
+    }
+  });
+
+  it('still includes the standard fields for every app', async () => {
+    const res = await request('/api/apps');
+    for (const app of res.body.apps) {
+      assert.ok(app.id, 'id is required');
+      assert.ok(app.name, 'name is required');
+      assert.ok(app.url, 'url is required (apps without url are filtered)');
+      assert.ok(app.category, 'category is required');
+    }
   });
 });
 

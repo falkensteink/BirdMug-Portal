@@ -468,6 +468,17 @@ h3 {
   background: var(--red-soft);
 }
 
+/* "Unknown" — Docker socket unreachable, /api/apps couldn't compute up.
+ * Grey rather than red because the registry IS valid; we just can't
+ * answer "is it currently running?" Clearly signals "we don't know"
+ * instead of falsely implying the app is down. */
+.hero-inline-status.unknown,
+.service-state.unknown,
+.project-status-pill.unknown {
+  color: #9aa0a6;
+  background: rgba(154, 160, 166, 0.12);
+}
+
 .hero-signal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
