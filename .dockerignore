@@ -1,4 +1,28 @@
+# Secrets — never bake into images (Arbiter L040)
+.env
+.env.*
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# VCS
 .git
-node_modules
-*.md
 .gitignore
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Tests + docs (build context = .; image only needs server.js + public/)
+test/
+*.md
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Project housekeeping
+memory/

@@ -6,7 +6,8 @@ services:
   # env vars, etc. docker-socket-proxy (tecnativa) whitelists only what's
   # needed: `docker ps` -equivalent calls over an HTTP shim, read-only.
   docker_socket_proxy:
-    image: tecnativa/docker-socket-proxy:latest
+    # Pinned per Arbiter L033. Bumps go through Dependabot per L027.
+    image: tecnativa/docker-socket-proxy:0.3
     container_name: portal_docker_socket_proxy
     restart: on-failure:3
     environment:
@@ -34,7 +35,10 @@ services:
   # ── Production ──
   portal-prod:
     build: .
-    image: birdmug-portal:latest
+    # Locally-built tag — `:current` (not `:latest`) per Arbiter L033.
+    # The Dockerfile is what changes; the tag is just a friendly local
+    # name for compose to reference across services.
+    image: birdmug-portal:current
     container_name: birdmug_portal
     profiles: ["prod"]
     restart: on-failure:3
