@@ -3,8 +3,29 @@ name: CI
 on:
   push:
     branches: ["**"]
+    paths-ignore:
+      - '**.md'
+      - '.dockerignore'
+      - '.gitignore'
+      - '.env.example'
+      - 'memory/**'
+      - 'docs/**'
+      - 'archive/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.dockerignore'
+      - '.gitignore'
+      - '.env.example'
+      - 'memory/**'
+      - 'docs/**'
+      - 'archive/**'
+
+# Cancel an in-progress run when a fresher push to the same ref arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:
