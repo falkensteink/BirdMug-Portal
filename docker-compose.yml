@@ -47,7 +47,7 @@ services:
     networks:
       - portal_net
     environment:
-      # Portal-namespaced env from birdmug-studios/prd. PORT and
+      # Portal-namespaced env from birdmug-services/prd. PORT and
       # MATTERMOST_WEBHOOK_URL are passed BOTH as PORTAL_* (what server.js
       # reads) and as the legacy unprefixed names (what the compose-level
       # healthcheck `process.env.PORT` and the host-port mapping below
@@ -86,7 +86,7 @@ services:
     networks:
       - portal_net
     environment:
-      # Portal-namespaced env from birdmug-studios/prd. PORT and
+      # Portal-namespaced env from birdmug-services/prd. PORT and
       # MATTERMOST_WEBHOOK_URL are passed BOTH as PORTAL_* (what server.js
       # reads) and as the legacy unprefixed names (what the compose-level
       # healthcheck `process.env.PORT` and the host-port mapping below
