@@ -35,3 +35,16 @@ doppler run -- docker compose --profile prod up -d --build
 - Security headers: CSP, X-Frame-Options DENY, nosniff
 - Bug Fairy proxy strips response to safe fields only
 - No write operations — portal is observation-only
+
+## Memory
+
+This project uses the standard memory system. See `memory/MEMORY.md`, `memory/implementation_plan.md`, `memory/lessons_learned.md`. Read them at session start.
+
+**Session end (REQUIRED — not optional):** Before the session closes or context is exhausted, invoke the `memory-writer` agent to update `memory/MEMORY.md` and `memory/lessons_learned.md` with:
+- What was built/changed/fixed this session
+- Any new decisions or architecture choices
+- New gotchas / failure modes discovered
+- Current state of in-progress work
+- Any new connected systems or config changes (env vars, Doppler secrets, n8n workflows, toshi-infra changes)
+
+This is not a suggestion. The 2026-05-09 incident: a full session of work was lost entirely because memory was never written. If you can't invoke memory-writer (context exhausted), write the key facts inline as a final message to the user so they can be recovered.
