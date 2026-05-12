@@ -10,6 +10,9 @@ secrets*.json
 .git
 .gitignore
 
+# Python (precaution; image is Node but build context cleanliness)
+__pycache__
+
 # Node
 node_modules/
 npm-debug.log*
